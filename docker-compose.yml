@@ -1,0 +1,33 @@
+version: '3'
+services:
+  config-service:
+    build: config-service
+    expose:
+      - 127.0.0.1:8888:8888
+    ports:
+      - 8888:8888
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8888/print-service/default" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  print-service:
+    build: print-service
+    ports:
+      - 8080:8080
+    depends_on:
+      config-service:
+        condition: service_healthy
+  zookeeper:
+    image: zookeeper
+    ports:
+      - "2181:2181"
+  kafka:
+    image: bitnami/kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
